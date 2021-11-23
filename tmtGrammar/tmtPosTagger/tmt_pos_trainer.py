@@ -1,7 +1,5 @@
 
-from transformers.utils.dummy_pt_objects import Trainer
-from tmtPosTagger import TMTPosTaggingModel
-from transformers import Trainer, TrainingArguments
+from transformers import Trainer
 
 class TMTPosTrainer(Trainer):
     def __init__(self, *args, **kwargs):

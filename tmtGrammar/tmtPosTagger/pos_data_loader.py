@@ -36,9 +36,13 @@ def create_json(intxt, outjson):
                     tokens, pos_tags = [], []
 
             else:
-                token, pos_tag = line.split("\t")
-                tokens.append(token)
-                pos_tags.append( TAGSET[pos_tag] )
+                line = line.split("\t")
+                if len(line) != 2:
+                    continue
+                else:
+                    token, pos_tag = line[0], line[1]
+                    tokens.append(token)
+                    pos_tags.append(TAGSET[pos_tag.capitalize()])
 
     df.to_json(outjson, orient='records', force_ascii=False, lines=True)
 

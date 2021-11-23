@@ -1,10 +1,10 @@
 
-PRETRAINED_BERT_DIR = "D:/tmtGrammar/pho/phobert-base" 
+PRETRAINED_BERT_DIR = "D:/tmt/tmtGrammar/pho/phobert-base" 
 PRETRAINED_BERT_URL = "vinai/phobert-base"
 
 TAGSET = {  'V': 0,
             'T': 1,
-            'CH': 2,
+            'Ch': 2,
             'P': 3,
             'Np': 4,
             'Cc': 5,

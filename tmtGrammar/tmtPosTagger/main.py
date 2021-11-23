@@ -5,12 +5,11 @@ import argparse
 import transformers
 from transformers import TrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
-# from transformers import Trainer
 
 from artifact import *
-from dataloader import load_pos_dataset
-from tmtPosTagger import TMTPosTaggingModel
-from trainer import TMTPosTrainer
+from pos_data_loader import load_pos_dataset
+from tmt_pos_tagger import TMTPosTaggingModel
+from tmt_pos_trainer import TMTPosTrainer
 
 import random
 
@@ -40,11 +39,17 @@ def parse_args():
         default="",
         help="Model output directory.",
     )
+    parser.add_argument(
+        "--model_dir",
+        type=str,
+        default="",
+        help="Pretrained model for evaluation or predict"
+    )
     parser.add_argument("--do_train", type=bool, help="Do training or not."),
     parser.add_argument("--do_eval", type=bool, help="Do validation or not."),
     parser.add_argument("--do_predict", type=bool, help="Do prediction or not."),
 
-    parser.add_argument("--max_sequence_length", type=int, default=100)
+    parser.add_argument("--max_sequence_length", type=int, default=20)
     parser.add_argument("--seed", type=int, default=282)
     parser.add_argument("--warmup_steps", type=int, default=500)
     parser.add_argument("--num_train_epochs", type=int, default=5)
@@ -105,9 +110,23 @@ if __name__== "__main__":
     logger.info(f"Validate set size: {len(dev_dataset)}")
 
 
-    #----------------# Initialize model #----------------#
+    ######## Initialize model ########
+    #----------------# Training #----------------#
 
-    
+    model = None
+
+    if args.do_train is True: 
+        last_checkpoint = None
+        last_checkpoint = get_last_checkpoint(args.output_dir)
+        model = TMTPosTaggingModel(last_checkpoint if last_checkpoint is not None else PRETRAINED_BERT_DIR, num_labels=len(TAGSET))
+
+    #----------------# Evaluate #----------------#
+
+    if args.do_eval is True or args.do_predict is True:
+        model = TMTPosTaggingModel(args.model_dir)
+  
+
+    #----------------# Inference #----------------#
 
     trainer = TMTPosTrainer(
         model = model,
@@ -132,30 +151,14 @@ if __name__== "__main__":
         eval_dataset=dev_dataset,
     )
 
-    ### MODEL INIT ###
-    #----------------# Training #----------------#
-
+    ### MAIN TASK ###
     if args.do_train is True: 
-        
-        last_checkpoint = None
-        last_checkpoint = get_last_checkpoint(args.output_dir)
-        model = TMTPosTaggingModel(last_checkpoint if last_checkpoint is not None else PRETRAINED_BERT_DIR, num_labels=len(TAGSET))
-
-    #----------------# Evaluate #----------------#
-
+        trainer.train(resume_from_checkpoint=last_checkpoint)
+    
     if args.do_eval is True: 
-        last_checkpoint = get_last_checkpoint(args.output_dir)
-        model = TMTPosTaggingModel(last_checkpoint if last_checkpoint is not None else PRETRAINED_BERT_DIR, num_labels=len(TAGSET))
-        trainer.predict(test_dataset)
-
-
-    #----------------# Inference #----------------#
-
-    if args.do_predict is True: 
-        last_checkpoint = get_last_checkpoint(args.output_dir)
-        trainer.predict(test_dataset)
-
-
+        evaluation = trainer.evaluate (test_dataset)
+        print(evaluation)
     
-    
-    trainer.train(resume_from_checkpoint=(True))
+    if args.do_predict is True:
+        prediction = trainer.predict(test_dataset)
+        print(prediction)
